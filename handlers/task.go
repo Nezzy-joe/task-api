@@ -24,6 +24,7 @@ var Tasks = []models.Task{
 	},
 }
 
+// GET TASK
 func GetTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -31,6 +32,7 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Tasks)
 }
 
+// GET TASK BYID
 func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 
@@ -51,6 +53,7 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
+// UPDATE TASK
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
@@ -66,7 +69,7 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	var UpdatedTask models.Task
 	err = json.NewDecoder(r.Body).Decode(&UpdatedTask)
 	if err != nil {
-		http.Error(w, "Invalis JSON", http.StatusBadRequest)
+		http.Error(w, "Invalide JSON", http.StatusBadRequest)
 		return
 	}
 	if UpdatedTask.Title == "" {
@@ -88,6 +91,27 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
+// DELETE TASK
+func DeleteTask(w http.ResponseWriter, r *http.Request) {
+	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid Task ID", http.StatusBadRequest)
+		return
+	}
+
+	for i, task := range Tasks {
+		if task.ID == id {
+			Tasks = append(Tasks[:1], Tasks[i+1:]...)
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+	}
+	http.Error(w, "Task not found", http.StatusNotFound)
+}
+
+// CREATE TASK
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	var newTask models.Task
 
@@ -109,6 +133,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(newTask)
 }
 
+// TASK HANDLER
 func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -122,6 +147,8 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+//TASKBYIDHANDLER
+
 func TaskByIDHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -129,6 +156,9 @@ func TaskByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPut:
 		UpdateTask(w, r)
+
+	case http.MethodDelete:
+		DeleteTask(w, r)
 
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
