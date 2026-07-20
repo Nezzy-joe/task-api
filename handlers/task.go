@@ -51,12 +51,49 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
+func UpdateTask(w http.ResponseWriter, r *http.Request) {
+
+	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
+
+	id, err := strconv.Atoi(idStr)
+
+	if err != nil {
+		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		return
+
+	}
+
+	var UpdatedTask models.Task
+	err = json.NewDecoder(r.Body).Decode(&UpdatedTask)
+	if err != nil {
+		http.Error(w, "Invalis JSON", http.StatusBadRequest)
+		return
+	}
+	if UpdatedTask.Title == "" {
+		http.Error(w, "Title is required", http.StatusBadRequest)
+		return
+	}
+
+	for i, task := range Tasks {
+		if task.ID == id {
+			UpdatedTask.ID = id
+			Tasks[i] = UpdatedTask
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			json.NewEncoder(w).Encode(UpdatedTask)
+			return
+		}
+
+	}
+	http.Error(w, "Task not found", http.StatusNotFound)
+}
+
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	var newTask models.Task
 
 	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		http.Error(w, "Invalide JSON", http.StatusBadRequest)
 		return
 	}
 	if newTask.Title == "" {
@@ -79,6 +116,19 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 
 	case http.MethodPost:
 		CreateTask(w, r)
+
+	default:
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func TaskByIDHandler(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		GetTaskByID(w, r)
+
+	case http.MethodPut:
+		UpdateTask(w, r)
 
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

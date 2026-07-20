@@ -9,7 +9,8 @@ import (
 
 func main() {
 	http.HandleFunc("/tasks", handlers.TaskHandler)
-	http.HandleFunc("/tasks/", handlers.GetTaskByID)
+	http.HandleFunc("/tasks/", handlers.TaskByIDHandler)
+
 	fmt.Println("server running on http://localhost:8080")
 	http.ListenAndServe(":8080", nil)
 }
