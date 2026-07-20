@@ -1,0 +1,17 @@
+# Compiled binaries
+task-api
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go workspace
+bin/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
