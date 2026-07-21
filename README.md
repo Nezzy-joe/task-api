@@ -102,7 +102,8 @@ http://localhost:8080
 ---
 
 ## 📖 Swagger Documentation
-Swagger UI
+
+### Swagger UI
 
 ![Swagger UI](images/swagger-ui.png)
 
@@ -119,16 +120,24 @@ Swagger UI provides interactive API documentation where you can test every endpo
 ## 🧪 Example Request
 
 ```bash
-curl http://localhost:8080/tasks
+curl -i http://localhost:8080/tasks
 ```
 
-Example Response
+## ✅ Example Response
 
-```json
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+
 [
   {
     "id": 1,
     "title": "Learn Go",
+    "completed": false
+  },
+  {
+    "id": 2,
+    "title": "Build Task API",
     "completed": false
   }
 ]
