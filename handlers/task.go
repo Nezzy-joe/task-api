@@ -24,7 +24,14 @@ var Tasks = []models.Task{
 	},
 }
 
-// GET TASK
+// GetTasks godoc
+//
+//	@Summary		Get all tasks
+//	@Description	Return all tasks
+//	@Tags			Tasks
+//	@Produce		json
+//	@Success		200	{array}	models.Task
+//	@Router			/tasks [get]
 func GetTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -32,7 +39,17 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(Tasks)
 }
 
-// GET TASK BYID
+// GetTaskByID godoc
+//
+//	@Summary		Get task by ID
+//	@Description	Return a single task
+//	@Tags			Tasks
+//	@Produce		json
+//	@Param			id	path		int	true	"Task ID"
+//	@Success		200	{object}	models.Task
+//	@Failure		400	{string}	string	"Invalid task ID"
+//	@Failure		404	{string}	string	"Task not found"
+//	@Router			/tasks/{id} [get]
 func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 
@@ -53,7 +70,19 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
-// UPDATE TASK
+// UpdateTask godoc
+//
+//	@Summary		Update a task
+//	@Description	Update an existing task
+//	@Tags			Tasks
+//	@Accept			json
+//	@Produce		json
+//	@Param			id		path		int			true	"Task ID"
+//	@Param			task	body		models.Task	true	"Updated Task"
+//	@Success		200		{object}	models.Task
+//	@Failure		400		{string}	string	"Invalid JSON"
+//	@Failure		404		{string}	string	"Task not found"
+//	@Router			/tasks/{id} [put]
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
 
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
@@ -91,7 +120,17 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
-// DELETE TASK
+// DeleteTask godoc
+//
+//	@Summary		Delete a task
+//	@Description	Delete a task by ID
+//	@Tags			Tasks
+//	@Produce		json
+//	@Param			id	path	int	true	"Task ID"
+//	@Success		204
+//	@Failure		400	{string}	string	"Invalid task ID"
+//	@Failure		404	{string}	string	"Task not found"
+//	@Router			/tasks/{id} [delete]
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 	id, err := strconv.Atoi(idStr)
@@ -111,7 +150,17 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Task not found", http.StatusNotFound)
 }
 
-// CREATE TASK
+// CreateTask godoc
+//
+//	@Summary		Create a new task
+//	@Description	Create a new task
+//	@Tags			Tasks
+//	@Accept			json
+//	@Produce		json
+//	@Param			task	body		models.Task	true	"Task"
+//	@Success		201		{object}	models.Task
+//	@Failure		400		{string}	string	"Invalid JSON"
+//	@Router			/tasks [post]
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	var newTask models.Task
 

@@ -1,6 +1,6 @@
 # 🚀 Task API
 
-A simple RESTful Task Management API built with **Go (Golang)**.
+A lightweight RESTful Task Management API built with Go's standard library, demonstrating CRUD operations, HTTP routing, JSON handling, and interactive Swagger documentation.
 
 This project demonstrates how to build a CRUD (Create, Read, Update, Delete) API using Go's standard `net/http` package, JSON handling, and Swagger documentation without relying on a web framework.
 
@@ -102,6 +102,9 @@ http://localhost:8080
 ---
 
 ## 📖 Swagger Documentation
+Swagger UI
+
+![Swagger UI](images/swagger-ui.png)
 
 After starting the server, open:
 
