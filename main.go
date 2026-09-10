@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Nezzy-joe/task-api/database"
 	"github.com/Nezzy-joe/task-api/handlers"
 
 	_ "github.com/Nezzy-joe/task-api/docs"
@@ -18,11 +19,21 @@ import (
 )
 
 func main() {
+	db, err := database.InitDB()
+	if err != nil {
+		fmt.Println("Failed to initialize database:", err)
+		return
+	}
+	defer db.Close()
+
 	http.HandleFunc("/tasks", handlers.TaskHandler)
 	http.HandleFunc("/tasks/", handlers.TaskByIDHandler)
 
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	fmt.Println("Server running on http://localhost:8080")
-	http.ListenAndServe(":8080", nil)
+
+	if err := http.ListenAndServe(":8080", nil); err != nil {
+		fmt.Println("Server error:", err)
+	}
 }
