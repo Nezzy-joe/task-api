@@ -24,6 +24,7 @@ func main() {
 		fmt.Println("Failed to initialize database:", err)
 		return
 	}
+	handlers.DB = db
 	defer db.Close()
 
 	http.HandleFunc("/tasks", handlers.TaskHandler)

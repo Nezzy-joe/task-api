@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/Nezzy-joe/task-api/models"
 )
+
+var DB *sql.DB
 
 //memory storage for tasks.
 
@@ -34,9 +37,36 @@ var Tasks = []models.Task{
 //	@Router			/tasks [get]
 func GetTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 
-	json.NewEncoder(w).Encode(Tasks)
+	rows, err := DB.Query("SELECT id, title, done FROM tasks")
+	if err != nil {
+		http.Error(w, "Failed to fetch tasks", http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	tasks := []models.Task{}
+
+	for rows.Next() {
+		var task models.Task
+		var done int
+
+		if err := rows.Scan(&task.ID, &task.Title, &done); err != nil {
+			http.Error(w, "Failed to read tasks", http.StatusInternalServerError)
+			return
+		}
+
+		task.Completed = done == 1
+		tasks = append(tasks, task)
+	}
+
+	if err := rows.Err(); err != nil {
+		http.Error(w, "Failed to read tasks", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(tasks)
 }
 
 // GetTaskByID godoc
@@ -59,15 +89,29 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, task := range Tasks {
-		if task.ID == id {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(task)
-			return
-		}
+	var task models.Task
+	var done int
+
+	err = DB.QueryRow(
+		"SELECT id, title, done FROM tasks WHERE id = ?",
+		id,
+	).Scan(&task.ID, &task.Title, &done)
+
+	if err == sql.ErrNoRows {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "Task not found", http.StatusNotFound)
+
+	if err != nil {
+		http.Error(w, "Failed to fetch task", http.StatusInternalServerError)
+		return
+	}
+
+	task.Completed = done == 1
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(task)
 }
 
 // UpdateTask godoc
