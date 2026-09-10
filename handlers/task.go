@@ -217,11 +217,31 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Title is required", http.StatusBadRequest)
 		return
 	}
+	done := 0
 
-	newTask.ID = len(Tasks) + 1
+	if newTask.Completed {
+		done = 1
+	}
 
-	Tasks = append(Tasks, newTask)
+	result, err := DB.Exec(
+		"INSERT INTO tasks (title, done) VALUES (?, ?)",
+		newTask.Title,
+		done,
+	)
 
+	if err != nil {
+		http.Error(w, "Failed to create task", http.StatusInternalServerError)
+		return
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		http.Error(w, "Failed to get created task ID", http.StatusInternalServerError)
+		return
+	}
+
+	newTask.ID = int(id)
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newTask)
 }
