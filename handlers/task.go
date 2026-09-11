@@ -12,7 +12,14 @@ import (
 
 var DB *sql.DB
 
-//memory storage for tasks.
+func writeJSONError(w http.ResponseWriter, message string, status int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"error": message,
+	})
+}
 
 // GetTasks godoc
 //
@@ -27,7 +34,7 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := DB.Query("SELECT id, title, done FROM tasks")
 	if err != nil {
-		http.Error(w, "Failed to fetch tasks", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to fetch tasks", http.StatusInternalServerError)
 		return
 	}
 	defer rows.Close()
@@ -39,7 +46,7 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 		var done int
 
 		if err := rows.Scan(&task.ID, &task.Title, &done); err != nil {
-			http.Error(w, "Failed to read tasks", http.StatusInternalServerError)
+			writeJSONError(w, "Failed to read tasks", http.StatusInternalServerError)
 			return
 		}
 
@@ -48,7 +55,7 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := rows.Err(); err != nil {
-		http.Error(w, "Failed to read tasks", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to read tasks", http.StatusInternalServerError)
 		return
 	}
 
@@ -72,7 +79,7 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		writeJSONError(w, "Invalid task ID", http.StatusBadRequest)
 		return
 	}
 
@@ -85,12 +92,12 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	).Scan(&task.ID, &task.Title, &done)
 
 	if err == sql.ErrNoRows {
-		http.Error(w, "Task not found", http.StatusNotFound)
+		writeJSONError(w, "Task not found", http.StatusNotFound)
 		return
 	}
 
 	if err != nil {
-		http.Error(w, "Failed to fetch task", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to fetch task", http.StatusInternalServerError)
 		return
 	}
 
@@ -121,7 +128,7 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(idStr)
 
 	if err != nil {
-		http.Error(w, "Invalid task ID", http.StatusBadRequest)
+		writeJSONError(w, "Invalid task ID", http.StatusBadRequest)
 		return
 
 	}
@@ -129,11 +136,11 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	var UpdatedTask models.Task
 	err = json.NewDecoder(r.Body).Decode(&UpdatedTask)
 	if err != nil {
-		http.Error(w, "Invalide JSON", http.StatusBadRequest)
+		writeJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	if UpdatedTask.Title == "" {
-		http.Error(w, "Title is required", http.StatusBadRequest)
+		writeJSONError(w, "Title is required", http.StatusBadRequest)
 		return
 	}
 
@@ -150,18 +157,18 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, "Failed to update task", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to update task", http.StatusInternalServerError)
 		return
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		http.Error(w, "Failed to verify update", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to verify update", http.StatusInternalServerError)
 		return
 	}
 
 	if rowsAffected == 0 {
-		http.Error(w, "Task not found", http.StatusNotFound)
+		writeJSONError(w, "Task not found", http.StatusNotFound)
 		return
 	}
 
@@ -187,7 +194,7 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	idStr := strings.TrimPrefix(r.URL.Path, "/tasks/")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, "Invalid Task ID", http.StatusBadRequest)
+		writeJSONError(w, "Invalid task ID", http.StatusBadRequest)
 		return
 	}
 
@@ -197,18 +204,18 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, "Failed to delete task", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to delete task", http.StatusInternalServerError)
 		return
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		http.Error(w, "Failed to verify deletion", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to verify deletion", http.StatusInternalServerError)
 		return
 	}
 
 	if rowsAffected == 0 {
-		http.Error(w, "Task not found", http.StatusNotFound)
+		writeJSONError(w, "Task not found", http.StatusNotFound)
 		return
 	}
 
@@ -231,11 +238,11 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&newTask)
 	if err != nil {
-		http.Error(w, "Invalide JSON", http.StatusBadRequest)
+		writeJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	if newTask.Title == "" {
-		http.Error(w, "Title is required", http.StatusBadRequest)
+		writeJSONError(w, "Title is required", http.StatusBadRequest)
 		return
 	}
 	done := 0
@@ -251,13 +258,13 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 	)
 
 	if err != nil {
-		http.Error(w, "Failed to create task", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to create task", http.StatusInternalServerError)
 		return
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		http.Error(w, "Failed to get created task ID", http.StatusInternalServerError)
+		writeJSONError(w, "Failed to get created task ID", http.StatusInternalServerError)
 		return
 	}
 
@@ -277,7 +284,7 @@ func TaskHandler(w http.ResponseWriter, r *http.Request) {
 		CreateTask(w, r)
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
@@ -295,6 +302,6 @@ func TaskByIDHandler(w http.ResponseWriter, r *http.Request) {
 		DeleteTask(w, r)
 
 	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		writeJSONError(w, "Method not allowed", http.StatusMethodNotAllowed)
 	}
 }
