@@ -14,19 +14,6 @@ var DB *sql.DB
 
 //memory storage for tasks.
 
-var Tasks = []models.Task{
-	{
-		ID:        1,
-		Title:     "Learn Go",
-		Completed: false,
-	},
-	{
-		ID:        2,
-		Title:     "Build Task Api",
-		Completed: false,
-	},
-}
-
 // GetTasks godoc
 //
 //	@Summary		Get all tasks
@@ -150,18 +137,39 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i, task := range Tasks {
-		if task.ID == id {
-			UpdatedTask.ID = id
-			Tasks[i] = UpdatedTask
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(UpdatedTask)
-			return
-		}
-
+	done := 0
+	if UpdatedTask.Completed {
+		done = 1
 	}
-	http.Error(w, "Task not found", http.StatusNotFound)
+
+	result, err := DB.Exec(
+		"UPDATE tasks SET title = ?, done = ? WHERE id = ?",
+		UpdatedTask.Title,
+		done,
+		id,
+	)
+
+	if err != nil {
+		http.Error(w, "Failed to update task", http.StatusInternalServerError)
+		return
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		http.Error(w, "Failed to verify update", http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected == 0 {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	UpdatedTask.ID = id
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(UpdatedTask)
 }
 
 // DeleteTask godoc
@@ -183,15 +191,28 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i, task := range Tasks {
-		if task.ID == id {
-			Tasks = append(Tasks[:1], Tasks[i+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	result, err := DB.Exec(
+		"DELETE FROM tasks WHERE id = ?",
+		id,
+	)
 
+	if err != nil {
+		http.Error(w, "Failed to delete task", http.StatusInternalServerError)
+		return
 	}
-	http.Error(w, "Task not found", http.StatusNotFound)
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		http.Error(w, "Failed to verify deletion", http.StatusInternalServerError)
+		return
+	}
+
+	if rowsAffected == 0 {
+		http.Error(w, "Task not found", http.StatusNotFound)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // CreateTask godoc
