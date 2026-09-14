@@ -43,14 +43,14 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 
 	for rows.Next() {
 		var task models.Task
-		var done int
+		var done bool
 
 		if err := rows.Scan(&task.ID, &task.Title, &done); err != nil {
 			writeJSONError(w, "Failed to read tasks", http.StatusInternalServerError)
 			return
 		}
 
-		task.Completed = done == 1
+		task.Completed = done
 		tasks = append(tasks, task)
 	}
 
@@ -84,10 +84,10 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var task models.Task
-	var done int
+	var done bool
 
 	err = DB.QueryRow(
-		"SELECT id, title, done FROM tasks WHERE id = ?",
+		"SELECT id, title, done FROM tasks WHERE id = $1",
 		id,
 	).Scan(&task.ID, &task.Title, &done)
 
@@ -101,7 +101,7 @@ func GetTaskByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	task.Completed = done == 1
+	task.Completed = done
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -144,13 +144,10 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	done := 0
-	if UpdatedTask.Completed {
-		done = 1
-	}
+	done := UpdatedTask.Completed
 
 	result, err := DB.Exec(
-		"UPDATE tasks SET title = ?, done = ? WHERE id = ?",
+		"UPDATE tasks SET title = $1, done = $2 WHERE id = $3",
 		UpdatedTask.Title,
 		done,
 		id,
@@ -199,7 +196,7 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := DB.Exec(
-		"DELETE FROM tasks WHERE id = ?",
+		"DELETE FROM tasks WHERE id = $1",
 		id,
 	)
 
@@ -241,34 +238,27 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		writeJSONError(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
+
 	if newTask.Title == "" {
 		writeJSONError(w, "Title is required", http.StatusBadRequest)
 		return
 	}
-	done := 0
 
-	if newTask.Completed {
-		done = 1
-	}
+	done := newTask.Completed
 
-	result, err := DB.Exec(
-		"INSERT INTO tasks (title, done) VALUES (?, ?)",
+	err = DB.QueryRow(
+		`INSERT INTO tasks (title, done)
+		 VALUES ($1, $2)
+		 RETURNING id`,
 		newTask.Title,
 		done,
-	)
+	).Scan(&newTask.ID)
 
 	if err != nil {
 		writeJSONError(w, "Failed to create task", http.StatusInternalServerError)
 		return
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		writeJSONError(w, "Failed to get created task ID", http.StatusInternalServerError)
-		return
-	}
-
-	newTask.ID = int(id)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(newTask)

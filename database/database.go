@@ -2,26 +2,43 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
+	"os"
 
-	_ "modernc.org/sqlite"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func InitDB() (*sql.DB, error) {
-	db, err := sql.Open("sqlite", "tasks.db")
+	// Load environment variables from .env for local development.
+	if err := godotenv.Load(); err != nil {
+		fmt.Println("Warning: .env file not found, using existing environment variables")
+	}
+
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL == "" {
+		return nil, fmt.Errorf("DATABASE_URL is not set")
+	}
+
+	db, err := sql.Open("postgres", databaseURL)
 	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Ping(); err != nil {
+		db.Close()
 		return nil, err
 	}
 
 	createTable := `
 	CREATE TABLE IF NOT EXISTS tasks (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		id SERIAL PRIMARY KEY,
 		title TEXT NOT NULL,
-		done INTEGER NOT NULL DEFAULT 0
+		done BOOLEAN NOT NULL DEFAULT FALSE
 	);
 	`
 
-	_, err = db.Exec(createTable)
-	if err != nil {
+	if _, err := db.Exec(createTable); err != nil {
 		db.Close()
 		return nil, err
 	}
@@ -49,9 +66,9 @@ func seedTasks(db *sql.DB) error {
 	seedSQL := `
 	INSERT INTO tasks (title, done)
 	VALUES
-		('Learn Go', 0),
-		('Build Task API', 0),
-		('Connect API to SQLite', 0);
+		('Learn Go', FALSE),
+		('Build Task API', FALSE),
+		('Connect API to PostgreSQL', FALSE);
 	`
 
 	_, err = db.Exec(seedSQL)
