@@ -1,0 +1,5 @@
+.env
+tasks.db
+.git
+.gitignore
+README.md
