@@ -47,6 +47,9 @@ func main() {
 	http.HandleFunc("/auth/signup", handlers.SignupHandler)
 	http.HandleFunc("/auth/login", handlers.LoginHandler)
 
+	http.HandleFunc("/public/info", handlers.PublicInfoHandler)
+	http.HandleFunc("/protected/profile", handlers.ProtectedProfileHandler)
+
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	fmt.Printf("Server running on http://localhost:%s\n", config.Port)
