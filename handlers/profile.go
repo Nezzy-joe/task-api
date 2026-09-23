@@ -34,12 +34,25 @@ func ProtectedProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Stage 2 only checks that a bearer token was presented.
-	// Token verification happens in Stage 3.
-	_ = token
+	if AuthClient == nil {
+		writeAuthJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "Authentication service is not configured",
+		})
+		return
+	}
 
-	writeAuthJSON(w, http.StatusOK, map[string]string{
-		"message": "Protected profile reached. Token verification comes in Stage 3.",
+	userResponse, err := AuthClient.WithToken(token).GetUser()
+	if err != nil {
+		writeAuthJSON(w, http.StatusUnauthorized, map[string]string{
+			"error": "Invalid or expired token",
+		})
+		return
+	}
+
+	writeAuthJSON(w, http.StatusOK, map[string]interface{}{
+		"id":                 userResponse.ID,
+		"email":              userResponse.Email,
+		"account_created_at": userResponse.CreatedAt,
 	})
 }
 
