@@ -48,7 +48,21 @@ func main() {
 	http.HandleFunc("/auth/login", handlers.LoginHandler)
 
 	http.HandleFunc("/public/info", handlers.PublicInfoHandler)
-	http.HandleFunc("/protected/profile", handlers.ProtectedProfileHandler)
+
+	http.Handle(
+		"/protected/profile",
+		handlers.RequireAuth(http.HandlerFunc(handlers.ProtectedProfileHandler)),
+	)
+
+	http.Handle(
+		"/protected/dashboard",
+		handlers.RequireAuth(http.HandlerFunc(handlers.ProtectedDashboardHandler)),
+	)
+
+	http.Handle(
+		"/auth/logout",
+		handlers.RequireAuth(http.HandlerFunc(handlers.LogoutHandler)),
+	)
 
 	http.Handle("/swagger/", httpSwagger.WrapHandler)
 

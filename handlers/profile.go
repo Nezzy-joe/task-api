@@ -3,6 +3,8 @@ package handlers
 import (
 	"net/http"
 	"strings"
+
+	"github.com/supabase-community/auth-go/types"
 )
 
 func PublicInfoHandler(w http.ResponseWriter, r *http.Request) {
@@ -26,36 +28,24 @@ func ProtectedProfileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, ok := extractBearerToken(r.Header.Get("Authorization"))
+	auth, ok := GetAuthContext(r)
 	if !ok {
-		writeAuthJSON(w, http.StatusUnauthorized, map[string]string{
-			"error": "Access token required",
-		})
-		return
-	}
-
-	if AuthClient == nil {
 		writeAuthJSON(w, http.StatusInternalServerError, map[string]string{
-			"error": "Authentication service is not configured",
+			"error": "Authenticated user context missing",
 		})
 		return
 	}
 
-	userResponse, err := AuthClient.WithToken(token).GetUser()
-	if err != nil {
-		writeAuthJSON(w, http.StatusUnauthorized, map[string]string{
-			"error": "Invalid or expired token",
-		})
-		return
-	}
+	userResponse := auth.User
+
+	user := userResponse.(*types.UserResponse)
 
 	writeAuthJSON(w, http.StatusOK, map[string]interface{}{
-		"id":                 userResponse.ID,
-		"email":              userResponse.Email,
-		"account_created_at": userResponse.CreatedAt,
+		"id":                 user.ID,
+		"email":              user.Email,
+		"account_created_at": user.CreatedAt,
 	})
 }
-
 func extractBearerToken(authorization string) (string, bool) {
 	parts := strings.Fields(authorization)
 
