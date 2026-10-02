@@ -1,8 +1,13 @@
 // @title Task API
-// @version 1.0
-// @description A simple Task Management API built with Go.
+// @version 2.0
+// @description A secure Task Management API built with Go and Supabase Auth.
 // @host localhost:8080
 // @BasePath /
+//
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter your bearer token as: Bearer <JWT>
 
 package main
 
@@ -64,7 +69,7 @@ func main() {
 		handlers.RequireAuth(http.HandlerFunc(handlers.LogoutHandler)),
 	)
 
-	http.Handle("/swagger/", httpSwagger.WrapHandler)
+	http.Handle("/docs/", httpSwagger.WrapHandler)
 
 	fmt.Printf("Server running on http://localhost:%s\n", config.Port)
 

@@ -1,6 +1,6 @@
 basePath: /
 definitions:
-  models.Task:
+  github_com_Nezzy-joe_task-api_models.Task:
     properties:
       completed:
         type: boolean
@@ -9,13 +9,220 @@ definitions:
       title:
         type: string
     type: object
+  handlers.authCredentialsRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  handlers.authResponse:
+    properties:
+      access_token:
+        type: string
+      expires_at:
+        type: integer
+      expires_in:
+        type: integer
+      refresh_token:
+        type: string
+      token_type:
+        type: string
+      user:
+        $ref: '#/definitions/handlers.authUserResponse'
+    type: object
+  handlers.authUserResponse:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+    type: object
 host: localhost:8080
 info:
   contact: {}
-  description: A simple Task Management API built with Go.
+  description: A secure Task Management API built with Go and Supabase Auth.
   title: Task API
-  version: "1.0"
+  version: "2.0"
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user through Supabase Auth and returns access and
+        refresh tokens.
+      parameters:
+      - description: Login credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.authCredentialsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "405":
+          description: Method Not Allowed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Log in a user
+      tags:
+      - Authentication
+  /auth/logout:
+    post:
+      description: Revokes the authenticated user's refresh tokens through Supabase
+        Auth.
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "405":
+          description: Method Not Allowed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Log out the authenticated user
+      tags:
+      - Authentication
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user through Supabase Auth.
+      parameters:
+      - description: Signup credentials
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.authCredentialsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.authResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "405":
+          description: Method Not Allowed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - Authentication
+  /protected/dashboard:
+    get:
+      description: Demonstrates reuse of the authentication middleware on a second
+        protected route.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "405":
+          description: Method Not Allowed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Access protected dashboard
+      tags:
+      - Protected
+  /protected/profile:
+    get:
+      description: Returns safe metadata for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "405":
+          description: Method Not Allowed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get authenticated profile
+      tags:
+      - Protected
+  /public/info:
+    get:
+      description: Returns information that does not require authentication.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "405":
+          description: Method Not Allowed
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get public information
+      tags:
+      - Public
   /tasks:
     get:
       description: Return all tasks
@@ -26,7 +233,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/models.Task'
+              $ref: '#/definitions/github_com_Nezzy-joe_task-api_models.Task'
             type: array
       summary: Get all tasks
       tags:
@@ -41,14 +248,14 @@ paths:
         name: task
         required: true
         schema:
-          $ref: '#/definitions/models.Task'
+          $ref: '#/definitions/github_com_Nezzy-joe_task-api_models.Task'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/models.Task'
+            $ref: '#/definitions/github_com_Nezzy-joe_task-api_models.Task'
         "400":
           description: Invalid JSON
           schema:
@@ -95,7 +302,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Task'
+            $ref: '#/definitions/github_com_Nezzy-joe_task-api_models.Task'
         "400":
           description: Invalid task ID
           schema:
@@ -122,14 +329,14 @@ paths:
         name: task
         required: true
         schema:
-          $ref: '#/definitions/models.Task'
+          $ref: '#/definitions/github_com_Nezzy-joe_task-api_models.Task'
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/models.Task'
+            $ref: '#/definitions/github_com_Nezzy-joe_task-api_models.Task'
         "400":
           description: Invalid JSON
           schema:
@@ -141,4 +348,10 @@ paths:
       summary: Update a task
       tags:
       - Tasks
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter your bearer token as: Bearer <JWT>'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

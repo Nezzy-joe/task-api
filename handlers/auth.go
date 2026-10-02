@@ -1,3 +1,15 @@
+// SignupHandler godoc
+// @Summary Register a new user
+// @Description Creates a new user through Supabase Auth.
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param credentials body authCredentialsRequest true "Signup credentials"
+// @Success 201 {object} authResponse
+// @Failure 400 {object} map[string]string
+// @Failure 405 {object} map[string]string
+// @Router /auth/signup [post]
+
 package handlers
 
 import (
@@ -18,15 +30,31 @@ type authCredentialsRequest struct {
 	Password string `json:"password"`
 }
 
-type authResponse struct {
-	User         types.User `json:"user"`
-	AccessToken  string     `json:"access_token,omitempty"`
-	RefreshToken string     `json:"refresh_token,omitempty"`
-	TokenType    string     `json:"token_type,omitempty"`
-	ExpiresIn    int        `json:"expires_in,omitempty"`
-	ExpiresAt    int64      `json:"expires_at,omitempty"`
+type authUserResponse struct {
+	ID    string `json:"id"`
+	Email string `json:"email"`
 }
 
+type authResponse struct {
+	User         authUserResponse `json:"user"`
+	AccessToken  string           `json:"access_token,omitempty"`
+	RefreshToken string           `json:"refresh_token,omitempty"`
+	TokenType    string           `json:"token_type,omitempty"`
+	ExpiresIn    int              `json:"expires_in,omitempty"`
+	ExpiresAt    int64            `json:"expires_at,omitempty"`
+}
+
+// SignupHandler godoc
+// @Summary Register a new user
+// @Description Creates a new user through Supabase Auth.
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param credentials body authCredentialsRequest true "Signup credentials"
+// @Success 201 {object} authResponse
+// @Failure 400 {object} map[string]string
+// @Failure 405 {object} map[string]string
+// @Router /auth/signup [post]
 func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeAuthJSON(w, http.StatusMethodNotAllowed, map[string]string{
@@ -72,7 +100,10 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := authResponse{
-		User:         resp.User,
+		User: authUserResponse{
+			ID:    resp.User.ID.String(),
+			Email: resp.User.Email,
+		},
 		AccessToken:  resp.Session.AccessToken,
 		RefreshToken: resp.Session.RefreshToken,
 		TokenType:    resp.Session.TokenType,
@@ -83,6 +114,18 @@ func SignupHandler(w http.ResponseWriter, r *http.Request) {
 	writeAuthJSON(w, http.StatusCreated, response)
 }
 
+// LoginHandler godoc
+// @Summary Log in a user
+// @Description Authenticates a user through Supabase Auth and returns access and refresh tokens.
+// @Tags Authentication
+// @Accept json
+// @Produce json
+// @Param credentials body authCredentialsRequest true "Login credentials"
+// @Success 200 {object} authResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 405 {object} map[string]string
+// @Router /auth/login [post]
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeAuthJSON(w, http.StatusMethodNotAllowed, map[string]string{
@@ -125,7 +168,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := authResponse{
-		User:         resp.Session.User,
+		User: authUserResponse{
+			ID:    resp.Session.User.ID.String(),
+			Email: resp.Session.User.Email,
+		},
 		AccessToken:  resp.Session.AccessToken,
 		RefreshToken: resp.Session.RefreshToken,
 		TokenType:    resp.Session.TokenType,

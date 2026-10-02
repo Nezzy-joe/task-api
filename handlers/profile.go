@@ -7,6 +7,14 @@ import (
 	"github.com/supabase-community/auth-go/types"
 )
 
+// PublicInfoHandler godoc
+// @Summary Get public information
+// @Description Returns information that does not require authentication.
+// @Tags Public
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Failure 405 {object} map[string]string
+// @Router /public/info [get]
 func PublicInfoHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeAuthJSON(w, http.StatusMethodNotAllowed, map[string]string{
@@ -20,6 +28,16 @@ func PublicInfoHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ProtectedProfileHandler godoc
+// @Summary Get authenticated profile
+// @Description Returns safe metadata for the authenticated user.
+// @Tags Protected
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
+// @Failure 405 {object} map[string]string
+// @Router /protected/profile [get]
 func ProtectedProfileHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeAuthJSON(w, http.StatusMethodNotAllowed, map[string]string{
@@ -46,6 +64,7 @@ func ProtectedProfileHandler(w http.ResponseWriter, r *http.Request) {
 		"account_created_at": user.CreatedAt,
 	})
 }
+
 func extractBearerToken(authorization string) (string, bool) {
 	parts := strings.Fields(authorization)
 
